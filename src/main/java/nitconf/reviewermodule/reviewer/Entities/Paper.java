@@ -24,14 +24,13 @@ public class Paper {
     private String title;
     private List<String> authors;
     private String abstractLink;
-    private String status;
     private LocalDateTime deadLine;
+    
 
 
     
 
-    @DBRef
-    private Review review;
+    
 
 
 

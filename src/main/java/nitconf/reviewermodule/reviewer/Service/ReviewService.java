@@ -1,6 +1,8 @@
 package nitconf.reviewermodule.reviewer.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -8,8 +10,12 @@ import org.springframework.stereotype.Service;
 
 import nitconf.reviewermodule.reviewer.Entities.Paper;
 import nitconf.reviewermodule.reviewer.Entities.Review;
+import nitconf.reviewermodule.reviewer.Entities.ReviewedPapers;
+import nitconf.reviewermodule.reviewer.Entities.User;
 import nitconf.reviewermodule.reviewer.Repositories.PaperRepository;
 import nitconf.reviewermodule.reviewer.Repositories.ReviewRepository;
+import nitconf.reviewermodule.reviewer.Repositories.ReviewedPapersRepository;
+import nitconf.reviewermodule.reviewer.Repositories.UserRepository;
 
 
 
@@ -22,6 +28,12 @@ public class ReviewService {
 
     @Autowired
     private PaperRepository paperRepository;
+
+    @Autowired
+    private ReviewedPapersRepository reviewedPapersRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
 
   
@@ -49,73 +61,89 @@ public class ReviewService {
     }
 
 
-    public boolean createReviewForPaper(String reviewBody, int paper_id)
-    {
-        Paper papertobereviewed = paperRepository.findByPaperid(paper_id);
-        if(papertobereviewed==null)
+    public boolean createReviewForPaper(String reviewBody, int paperId, String userid) {
+        Paper paperToBeReviewed = paperRepository.findByPaperid(paperId);
+        User reviewer = userRepository.findByUserId(userid);
+        if (paperToBeReviewed == null) {
+          return false;
+        }
+        if(reviewer==null)
         {
             return false;
-
         }
+      
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        LocalDateTime deadline = paperToBeReviewed.getDeadLine();
+      
+        if (checkdeadLine(currentDateTime, deadline) == 0) {
+          return false;
+        }
+      
+        // Create the review
+        Review review = new Review(reviewBody, reviewer);
+        reviewRepository.save(review);
+      
+    
+        //Add the Paper to the reviewed papers database
+        ReviewedPapers reviewedPaper = new ReviewedPapers(paperToBeReviewed, reviewer, review);
+        reviewedPapersRepository.save(reviewedPaper);
+      
+        return true;
+      }
+      
+    public boolean updateReviewForPaper(String reviewBody, int paperid, String userid)
+    {
+        Paper papertobeupdated= paperRepository.findByPaperid(paperid);
+        User reviewer = userRepository.findByUserId(userid);
+        if(papertobeupdated==null)
+        {
+            return false;
+        }
+        if(reviewer==null)
+        {
+            
+            return false;
+        }
+      
+
+        
+        ReviewedPapers reviewedPaper = reviewedPapersRepository.findByReviewedPaperAndReviewer(papertobeupdated, reviewer);
+        if (reviewedPaper == null) {
+          return false; // Paper not reviewed by this user
+        }
+
+      
+        // Update the review content (assuming the review is retrieved in ReviewedPapers)
+        Review existingReview = reviewedPaper.getReview();
+        existingReview.setContent(reviewBody);
+        reviewRepository.save(existingReview);
+      
+        return true;
+
         
 
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        LocalDateTime deadLine = papertobereviewed.getDeadLine();
 
-        if(checkdeadLine(currentDateTime, deadLine)==0)
 
-        {
-            return false;
-        }
-        //create
-        Review review = new Review(reviewBody);//Create the review with a constructor 
-        reviewRepository.save(review);
-        papertobereviewed.setReview(review);//set the Review field of the Paper object with the review
-        papertobereviewed.setStatus("Reviewed");//change status
-        paperRepository.save(papertobereviewed);
-        return true;
 
 
     }
-    public boolean updateReviewForPaper(String reviewBody, int paper_id)
-    {
-        Paper papertobeupdated= paperRepository.findByPaperid(paper_id);
-        if(papertobeupdated.getStatus()=="Assigned")
-        {
-            return false;
-        }
-        
-        papertobeupdated.setStatus("Assigned");
-        LocalDateTime currentDateTime = LocalDateTime.now();
-        LocalDateTime deadLine = papertobeupdated.getDeadLine();
-        if(checkdeadLine(currentDateTime, deadLine)==0)
-        {
-            return false;
 
-        }
-        //delete the existing review
-        Review existingReview = papertobeupdated.getReview();
-        reviewRepository.delete(existingReview);
-
-
-        //update 
-        Review review = new Review(reviewBody);
-        reviewRepository.save(review);
-        papertobeupdated.setReview(review);
-        papertobeupdated.setStatus("Reviewed");
-        paperRepository.save(papertobeupdated);
-        return true;
-
-
-    }
-
-    public boolean deleteReviewForPaper(int paper_id)
+    public boolean deleteReviewForPaper(int paper_id, String userid)
     {
         Paper papertobeunreviewed = paperRepository.findByPaperid(paper_id);
+        User reviewer = userRepository.findByUserId(userid);
         if(papertobeunreviewed==null)
         {
             return false;
         }
+        ReviewedPapers reviewedPaper = reviewedPapersRepository.findByReviewedPaperAndReviewer(papertobeunreviewed, reviewer);
+        if(reviewedPaper==null)
+        {
+            return false;
+        }
+
+
+
         LocalDateTime currentDateTime = LocalDateTime.now();
         LocalDateTime deadLine = papertobeunreviewed.getDeadLine();
         if(checkdeadLine(currentDateTime, deadLine)==0)
@@ -123,10 +151,11 @@ public class ReviewService {
             return false;
 
         }
-        papertobeunreviewed.setStatus("Assigned");
-        reviewRepository.delete(papertobeunreviewed.getReview());
-        papertobeunreviewed.setReview(null);
-        paperRepository.save(papertobeunreviewed);
+
+        Review existingReview = reviewedPaper.getReview();
+        reviewRepository.delete(existingReview);
+        reviewedPapersRepository.delete(reviewedPaper);
+       
         return true;
        
 

@@ -25,11 +25,11 @@ public class ReviewController {
     @Autowired
     private ReviewService reviewService;
    
-    @PostMapping("/submitreview/{paperid}")
-    public ResponseEntity<String> submitReview(@PathVariable int paperid, @RequestBody String reviewBody)
+    @PostMapping("/submitreview/{paperid}/{userid}")
+    public ResponseEntity<String> submitReview(@PathVariable String userid ,@PathVariable int paperid, @RequestBody String reviewBody)
 
     {
-        boolean creationSuccessful = reviewService.createReviewForPaper(reviewBody, paperid);
+        boolean creationSuccessful = reviewService.createReviewForPaper(reviewBody, paperid, userid);
         if(creationSuccessful)
         {
             return new ResponseEntity<>("Review submitted successfully", HttpStatus.OK);
@@ -39,9 +39,9 @@ public class ReviewController {
         }
     }
 
-    @PostMapping("/update/{paperId}")
-    public ResponseEntity<String> updateReview(@PathVariable int paperId, @RequestBody String reviewBody) {
-        boolean updateSuccessful = reviewService.updateReviewForPaper(reviewBody, paperId);
+    @PostMapping("/update/{paperId}/{userid}")
+    public ResponseEntity<String> updateReview(@PathVariable String userid,@PathVariable int paperId, @RequestBody String reviewBody) {
+        boolean updateSuccessful = reviewService.updateReviewForPaper(reviewBody, paperId,userid);
 
         if (updateSuccessful) {
             return new ResponseEntity<>("Review updated successfully", HttpStatus.OK);
@@ -50,9 +50,9 @@ public class ReviewController {
         }
     }
 
-    @DeleteMapping("/delete/{paperId}")
-    public ResponseEntity<String> deleteReview(@PathVariable int paperId) {
-        boolean deletionSuccessful = reviewService.deleteReviewForPaper(paperId);
+    @DeleteMapping("/delete/{paperId}/{userid}")
+    public ResponseEntity<String> deleteReview(@PathVariable String userid, @PathVariable int paperId) {
+        boolean deletionSuccessful = reviewService.deleteReviewForPaper(paperId, userid);
 
         if (deletionSuccessful) {
             return new ResponseEntity<>("Review deleted successfully", HttpStatus.OK);

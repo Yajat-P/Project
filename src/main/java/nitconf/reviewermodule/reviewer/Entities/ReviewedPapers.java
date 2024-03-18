@@ -9,39 +9,25 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Document(collection = "Reviews")
-@AllArgsConstructor
+@Document(collection = "ReviewedPapers")
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
-public class Review {
-
+public class ReviewedPapers {
     @Id
     private ObjectId id;
-
-    private String content;
-
+    private Paper reviewedPaper;
     @DBRef
     private User reviewer;
-
-    
-
-    public Review(String content) {
-        this.content = content;
-    }
-
-
-
-    public Review(String content, User reviewer) {
-        this.content = content;
+    @DBRef
+    private Review review;
+    public ReviewedPapers(Paper reviewedPaper, User reviewer, Review review) {
+        this.reviewedPaper = reviewedPaper;
         this.reviewer = reviewer;
+        this.review = review;
     }
     
 
-    
-
-    
-    
-    
 
 
 
