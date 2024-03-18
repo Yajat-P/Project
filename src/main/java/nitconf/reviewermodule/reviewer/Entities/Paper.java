@@ -1,5 +1,6 @@
 package nitconf.reviewermodule.reviewer.Entities;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.bson.types.ObjectId;
@@ -19,12 +20,19 @@ import lombok.NoArgsConstructor;
 public class Paper {
     @Id
     ObjectId id;
+    int paperid;
     private String title;
     private List<String> authors;
     private String abstractLink;
     private String status;
+    private LocalDateTime deadLine;
+
+
+    
+
     @DBRef
     private Review review;
+
 
 
     
