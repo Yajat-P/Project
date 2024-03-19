@@ -115,6 +115,9 @@ public class ReviewService {
       
         // Update the review content (assuming the review is retrieved in ReviewedPapers)
         Review existingReview = reviewedPaper.getReview();
+        if (existingReview == null) {
+            return false;
+        }
         existingReview.setContent(reviewBody);
         reviewRepository.save(existingReview);
       
