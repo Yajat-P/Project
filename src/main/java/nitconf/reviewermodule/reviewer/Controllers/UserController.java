@@ -24,7 +24,7 @@ import nitconf.reviewermodule.reviewer.Repositories.UserRepository;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("")
-public class LoginController {
+public class UserController {
     
     private final AuthenticationService service;
 
